@@ -95,7 +95,7 @@ public:
             BossAI::JustEngagedWith(who);
             Talk(SAY_AGGRO);
             me->SetInCombatWithZone();
-            events.ScheduleEvent(EVENT_HATEFUL_STRIKE, 1200ms);
+            events.ScheduleEvent(EVENT_HATEFUL_STRIKE, 2400ms);
             events.ScheduleEvent(EVENT_BERSERK, 7min); // 7 minutes enrange
             events.ScheduleEvent(EVENT_HEALTH_CHECK, 1s);
             // instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
@@ -114,51 +114,40 @@ public:
             {
                 case EVENT_HATEFUL_STRIKE:
                    {
-                        // Cast Hateful strike on the player with the highest amount of HP within melee distance, and second threat amount
-                        std::list<Unit*> meleeRangeTargets;
-                        Unit* finalTarget = nullptr;
+                        // Cast Hateful Strike on the highest-threat target in melee range that is not the current victim (dedicated off-tank).
+                        // If no such target exists, fall back to the current victim to avoid stalling.
+                        std::list<HostileReference*> threatList = me->GetThreatMgr().GetThreatList();
+                        Unit* hatefulTarget = nullptr;
                         uint8 counter = 0;
-                        auto i = me->GetThreatMgr().GetThreatList().begin();
-                        for (; i != me->GetThreatMgr().GetThreatList().end(); ++i, ++counter)
+                        for (auto const& ref : threatList)
                         {
-                            // Gather all units with melee range
-                            Unit* target = (*i)->getTarget();
+                            Unit* target = ref->getTarget();
+                            if (counter < 3) // keep top aggro slots sticky
+                                me->AddThreat(target, 500.0f);
+
+                            if (target == me->GetVictim())
+                            {
+                                ++counter;
+                                continue; // never pick main tank
+                            }
+
                             if (me->IsWithinMeleeRange(target))
                             {
-                                meleeRangeTargets.push_back(target);
+                                hatefulTarget = target;
+                                break; // first eligible non-victim in threat order
                             }
-                            // and add threat to most hated
-                            if (counter < 3)
-                            {
-                                me->AddThreat(target, 500.0f);
-                            }
+                            ++counter;
                         }
-                        counter = 0;
-                        std::list<Unit*, std::allocator<Unit*>>::iterator itr;
-                        for (itr = meleeRangeTargets.begin(); itr != meleeRangeTargets.end(); ++itr, ++counter)
-                        {
-                            // if there is only one target available
-                            if (meleeRangeTargets.size() == 1)
-                            {
-                                finalTarget = (*itr);
-                            }
-                            else if (counter > 0) // skip first target
-                            {
-                                if (!finalTarget || (*itr)->GetHealth() > finalTarget->GetHealth())
-                                {
-                                    finalTarget = (*itr);
-                                }
-                                // third loop
-                                if (counter >= 2)
-                                    break;
-                            }
-                        }
-                        if (finalTarget)
+
+                        if (!hatefulTarget && me->GetVictim() && me->IsWithinMeleeRange(me->GetVictim()))
+                            hatefulTarget = me->GetVictim(); // safety fallback
+
+                        if (hatefulTarget)
                         {
                             int32 dmg = urand(22100,22850);
-                            me->CastCustomSpell(finalTarget, SPELL_HATEFUL_STRIKE_10, &dmg, 0, 0, false);
+                            me->CastCustomSpell(hatefulTarget, SPELL_HATEFUL_STRIKE_10, &dmg, 0, 0, false);
                         }
-                        events.Repeat(1200ms);
+                        events.Repeat(2400ms);
                         break;
                     }
                 case EVENT_BERSERK:

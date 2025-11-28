@@ -328,7 +328,6 @@ public:
                 }
                 case EVENT_THADDIUS_POLARITY_SHIFT:
                     me->CastSpell(me, SPELL_POLARITY_SHIFT, false);
-                    events.Repeat(30s);
                     break;
                 case EVENT_ALLOW_BALL_LIGHTNING:
                     ballLightningEnabled = true;
@@ -416,7 +415,6 @@ public:
 
             if (me->GetEntry() == NPC_STALAGG_40) // This event needs synchronisation, called for stalagg only
             {
-                events.ScheduleEvent(EVENT_MINION_MAGNETIC_PULL, 20s);
             }
 
             if (Creature* cr = me->GetInstanceScript()->GetCreature(DATA_THADDIUS_BOSS))
@@ -511,31 +509,6 @@ public:
                     me->CastSpell(me, SPELL_STATIC_FIELD, false);
                     events.Repeat(3s);
                     break;
-                case EVENT_MINION_MAGNETIC_PULL:
-               {
-                    events.Repeat(20s);
-                    if (Creature* feugen = me->GetInstanceScript()->GetCreature(DATA_FEUGEN_BOSS))
-                    {
-                        if (!feugen->IsAlive() || !feugen->GetVictim() || !me->GetVictim())
-                            return;
-
-                        float threatFeugen = feugen->GetThreatMgr().GetThreat(feugen->GetVictim());
-                        float threatStalagg = me->GetThreatMgr().GetThreat(me->GetVictim());
-                        Unit* tankFeugen = feugen->GetVictim();
-                        Unit* tankStalagg = me->GetVictim();
-
-                        feugen->GetThreatMgr().ModifyThreatByPercent(tankFeugen, -100);
-                        feugen->AddThreat(tankStalagg, threatFeugen);
-                        feugen->CastSpell(tankStalagg, SPELL_MAGNETIC_PULL, true);
-                        feugen->AI()->DoAction(ACTION_MAGNETIC_PULL);
-
-                        me->GetThreatMgr().ModifyThreatByPercent(tankStalagg, -100);
-                        me->AddThreat(tankFeugen, threatStalagg);
-                        me->CastSpell(tankFeugen, SPELL_MAGNETIC_PULL, true);
-                        DoAction(ACTION_MAGNETIC_PULL);
-                    }
-                    break;
-                }
                 case EVENT_MINION_CHECK_DISTANCE:
                     if (Creature* cr = ObjectAccessor::GetCreature(*me, myCoil))
                     {

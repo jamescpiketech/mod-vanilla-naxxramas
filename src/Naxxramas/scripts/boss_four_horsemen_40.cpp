@@ -276,7 +276,7 @@ public:
                     }
                     else // HORSEMAN_BLAUMEUX
                         me->CastSpell(me->GetVictim(), SPELL_BLAUMEUX_VOID_ZONE, false);
-                    events.Repeat(15s);
+                    events.Repeat(25s);
                     return;
                 case EVENT_HEALTH_CHECK:
                     if (!doneFirstShieldWall && me->GetHealthPct() <= 50.0f)
