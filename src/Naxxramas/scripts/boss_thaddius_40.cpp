@@ -579,8 +579,9 @@ class spell_thaddius_pos_neg_charge : public SpellScript
             return;
 
         // Determine charge on target
-        bool targetPositive = target->HasAura(SPELL_POSITIVE_POLARITY) || target->HasAura(SPELL_POSITIVE_CHARGE);
-        bool targetNegative = target->HasAura(SPELL_NEGATIVE_POLARITY) || target->HasAura(SPELL_NEGATIVE_CHARGE);
+        // Treat any of the positive/negative auras (base + stack) as the same polarity
+        bool targetPositive = target->HasAura(SPELL_POSITIVE_POLARITY) || target->HasAura(SPELL_POSITIVE_CHARGE) || target->HasAura(SPELL_POSITIVE_CHARGE_STACK);
+        bool targetNegative = target->HasAura(SPELL_NEGATIVE_POLARITY) || target->HasAura(SPELL_NEGATIVE_CHARGE) || target->HasAura(SPELL_NEGATIVE_CHARGE_STACK);
 
         // Determine which charge this damage aura represents
         uint32 spellId = GetSpellInfo()->Id;
