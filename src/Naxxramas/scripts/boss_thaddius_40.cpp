@@ -574,14 +574,20 @@ class spell_thaddius_pos_neg_charge : public SpellScript
 
     void HandleDamage(SpellEffIndex /*effIndex*/)
     {
-        if (!GetTriggeringSpell())
-            return;
-
         Unit* target = GetHitUnit();
         if (!target)
             return;
 
-        if (target->HasAura(GetTriggeringSpell()->Id) || !target->IsPlayer())
+        // Determine charge on target
+        bool targetPositive = target->HasAura(SPELL_POSITIVE_POLARITY) || target->HasAura(SPELL_POSITIVE_CHARGE);
+        bool targetNegative = target->HasAura(SPELL_NEGATIVE_POLARITY) || target->HasAura(SPELL_NEGATIVE_CHARGE);
+
+        // Determine which charge this damage aura represents
+        uint32 spellId = GetSpellInfo()->Id;
+        bool dmgIsPositive = (spellId == SPELL_POSITIVE_CHARGE || spellId == SPELL_POSITIVE_POLARITY);
+
+        // Same polarity or non-player: no damage
+        if (!target->IsPlayer() || (dmgIsPositive && targetPositive) || (!dmgIsPositive && targetNegative))
         {
             SetHitDamage(0);
         }
