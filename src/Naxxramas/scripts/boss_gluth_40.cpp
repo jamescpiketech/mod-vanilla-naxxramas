@@ -117,9 +117,9 @@ public:
             me->SetInCombatWithZone();
             events.ScheduleEvent(EVENT_MORTAL_WOUND, 10s);
             events.ScheduleEvent(EVENT_ENRAGE, 10s); // VMangos value
-            events.ScheduleEvent(EVENT_DECIMATE, RAID_MODE(110s, 90s, 110s, 90s));
+            events.ScheduleEvent(EVENT_DECIMATE, Milliseconds(RAID_MODE(110000, 90000, 110000, 90000)));
             events.ScheduleEvent(EVENT_BERSERK, 6min);
-            events.ScheduleEvent(EVENT_SUMMON_ZOMBIE, 6s); // VMangos value
+            events.ScheduleEvent(EVENT_SUMMON_ZOMBIE, 6s);  // VMangos value
             events.ScheduleEvent(EVENT_CAN_EAT_ZOMBIE, 3s);  // VMangos value
             events.ScheduleEvent(EVENT_TERRIFYING_ROAR, 20s); // VMangos value
         }
@@ -229,7 +229,7 @@ public:
                 case EVENT_SUMMON_ZOMBIE:
                     {
                         uint8 rand = urand(0, 2);
-                        for (int32 i = 0; i < RAID_MODE(1, 2, 2, 2); ++i)
+                        for (int32 i = 0; i < 1; ++i)
                         {
                             // In 10 man raid, normal mode - should spawn only from mid gate
                             // \1 |0 /2 pos

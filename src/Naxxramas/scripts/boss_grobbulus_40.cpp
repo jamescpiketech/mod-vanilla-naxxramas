@@ -99,10 +99,10 @@ public:
             BossAI::JustEngagedWith(who);
             PullChamberAdds();
             me->SetInCombatWithZone();
-            events.ScheduleEvent(EVENT_POISON_CLOUD, 15s);
+            events.ScheduleEvent(EVENT_POISON_CLOUD, 20s);
             events.ScheduleEvent(EVENT_MUTATING_INJECTION, 20s);
             events.ScheduleEvent(EVENT_SLIME_SPRAY, 10s);
-            events.ScheduleEvent(EVENT_BERSERK, RAID_MODE(720s, 540s, 540s, 540s));
+            events.ScheduleEvent(EVENT_BERSERK, Milliseconds(RAID_MODE(720000, 540000, 540000, 540000)));
         }
 
         void SpellHitTarget(Unit* target, SpellInfo const* spellInfo) override
@@ -162,19 +162,15 @@ public:
             {
                 case EVENT_POISON_CLOUD:
                     me->CastSpell(me, SPELL_POISON_CLOUD, true);
-                    events.Repeat(15s);
+                    events.Repeat(20s);
                     break;
                 case EVENT_BERSERK:
                     me->CastSpell(me, SPELL_BERSERK, true);
                     break;
                 case EVENT_SLIME_SPRAY:
                     Talk(EMOTE_SLIME);
-                    if (Unit* target = me->GetVictim())
-                    {
-                        int32 bp0 = urand(3200, 4800);
-                        me->CastCustomSpell(target, SPELL_SLIME_SPRAY_10, &bp0, nullptr, nullptr, false);
-                    }
-                    events.Repeat(20s);
+                    me->CastSpell(me->GetVictim(), RAID_MODE(SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25, SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25), false);
+                    events.Repeat(30s);
                     break;
                 case EVENT_MUTATING_INJECTION:
                     if (Unit* target = SelectTarget(SelectTargetMethod::Random, 1, 100.0f, true, true, -SPELL_MUTATING_INJECTION))
