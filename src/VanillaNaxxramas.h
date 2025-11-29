@@ -7,7 +7,6 @@
 
 #include "Config.h"
 #include "ScriptMgr.h"
-#include <array>
 
 #define NAXXRAMAS_PHASE_MAX 2
 std::array<std::string, NAXXRAMAS_PHASE_MAX> const NaxxramasPhasesNames =
