@@ -43,8 +43,6 @@ enum Spells
     SPELL_DECREPIT_FEVER_25         = 55011,
     SPELL_PLAGUE_CLOUD              = 29350,
     SPELL_TELEPORT_SELF             = 30211,
-
-    SPELL_TELEPORT_PLAYERS          = 29273, // updated target in db
     SPELL_SUMMON_PLAYER             = 25104,
 };
 
@@ -55,8 +53,7 @@ enum Events
     EVENT_ERUPT_SECTION             = 3,
     EVENT_SWITCH_PHASE              = 4,
     EVENT_SAFETY_DANCE              = 5,
-    EVENT_PLAGUE_CLOUD              = 6,
-    EVENT_TELEPORT_PLAYER           = 7
+    EVENT_PLAGUE_CLOUD              = 6
 };
 
 enum Misc
@@ -109,15 +106,12 @@ public:
         uint8 currentSection{};
         bool moveRight{};
 
-        GuidList portedPlayersThisPhase;
-
         void Reset() override
         {
             BossAI::Reset();
             events.Reset();
             currentPhase = 0;
             currentSection = 3;
-            portedPlayersThisPhase.clear();
             KillPlayersInTheTunnel();
             moveRight = true;
         }
@@ -159,8 +153,6 @@ public:
                 events.ScheduleEvent(EVENT_DECEPIT_FEVER, 17s);
                 events.ScheduleEvent(EVENT_ERUPT_SECTION, 15s);
                 events.ScheduleEvent(EVENT_SWITCH_PHASE, 90s);
-                events.ScheduleEvent(EVENT_TELEPORT_PLAYER, 40s);
-                portedPlayersThisPhase.clear();
             }
             else // if (phase == PHASE_FAST_DANCE)
             {
@@ -199,41 +191,6 @@ public:
                     if (player->IsAlive() && !player->IsGameMaster())
                         if (player->GetPositionY() <= -3735.0f)
                             player->KillSelf();
-        }
-
-        void DoEventTeleportPlayer()
-        {
-            std::list<Unit*> candidates;
-            SelectTargetList(candidates, 3, SelectTargetMethod::Random, 0, [&](Unit* target)
-            {
-                if (!target->IsPlayer()) // never target nonplayers (pets, guardians, etc.)
-                    return false;
-                if (!target->IsAlive())
-                    return false;
-                if (me->GetVictim() == target) // never target tank
-                    return false;
-                // skip players who already have been teleported this phase
-                if (std::find(portedPlayersThisPhase.begin(), portedPlayersThisPhase.end(), target->GetGUID()) != portedPlayersThisPhase.end())
-                    return false;
-                return true;
-            });
-
-            if (candidates.empty())
-                return;
-
-            for (int i = 0; i < 3 ; i++)
-            {
-                if (candidates.empty())
-                    break;
-                auto itr = candidates.begin();
-                if (candidates.size() > 1)
-                    std::advance(itr, urand(0, candidates.size() - 1));
-                Unit *target = *itr;
-                candidates.erase(itr);
-                portedPlayersThisPhase.push_back(target->GetGUID());
-                DoModifyThreatByPercent(target, -99); // prevent heigan chasing and resetting
-                target->CastSpell(target, SPELL_TELEPORT_PLAYERS, true);
-            }
         }
 
         void UpdateAI(uint32 diff) override
@@ -311,9 +268,6 @@ public:
                     events.Repeat(5s);
                     return;
                 }
-                case EVENT_TELEPORT_PLAYER:
-                    DoEventTeleportPlayer();
-                    break;
             }
             DoMeleeAttackIfReady();
         }

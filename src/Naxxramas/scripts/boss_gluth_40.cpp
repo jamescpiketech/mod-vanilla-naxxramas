@@ -229,7 +229,7 @@ public:
                 case EVENT_SUMMON_ZOMBIE:
                     {
                         uint8 rand = urand(0, 2);
-                        for (int32 i = 0; i < RAID_MODE(1, 2, 2, 2); ++i)
+                        for (int32 i = 0; i < 1; ++i)
                         {
                             // In 10 man raid, normal mode - should spawn only from mid gate
                             // \1 |0 /2 pos

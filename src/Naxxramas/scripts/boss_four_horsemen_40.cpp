@@ -144,7 +144,7 @@ public:
             BossAI::Reset();
             me->SetPosition(me->GetHomePosition());
             events.Reset();
-            events.RescheduleEvent(EVENT_MARK_CAST, 20s);
+            events.RescheduleEvent(EVENT_MARK_CAST, 30s);
             events.RescheduleEvent(EVENT_BERSERK, 10min);
             summons.DespawnAll(); // despawn spirits
             if ((me->GetEntry() != NPC_LADY_BLAUMEUX_40 && me->GetEntry() != NPC_SIR_ZELIEK_40))
@@ -155,7 +155,7 @@ public:
             {
                 events.RescheduleEvent(EVENT_SECONDARY_SPELL, 15s);
             }
-            doneFirstShieldWall = false;
+            doneFirstShieldWall = true; // skip 50% Shield Wall, keep 20% check
         }
 
         void KilledUnit(Unit* who) override
@@ -235,7 +235,7 @@ public:
             {
                 case EVENT_MARK_CAST:
                     me->CastSpell(me, TABLE_SPELL_MARK[horsemanId], false);
-                    events.Repeat(12s);
+                    events.Repeat(24s);
                     return;
                 case EVENT_BERSERK:
                     Talk(SAY_SPECIAL);
@@ -276,7 +276,7 @@ public:
                     }
                     else // HORSEMAN_BLAUMEUX
                         me->CastSpell(me->GetVictim(), SPELL_BLAUMEUX_VOID_ZONE, false);
-                    events.Repeat(15s);
+                    events.Repeat(25s);
                     return;
                 case EVENT_HEALTH_CHECK:
                     if (!doneFirstShieldWall && me->GetHealthPct() <= 50.0f)

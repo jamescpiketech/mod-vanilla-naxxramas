@@ -268,7 +268,7 @@ public:
             if (summonTimer) // Revive
             {
                 summonTimer += diff;
-                if (summonTimer >= 5000)
+                if (summonTimer >= 20000) // allow 20s to finish both before they revive
                 {
                     summons.DoAction(ACTION_RESTORE);
                     summonTimer = 0;
@@ -416,7 +416,6 @@ public:
 
             if (me->GetEntry() == NPC_STALAGG_40) // This event needs synchronisation, called for stalagg only
             {
-                events.ScheduleEvent(EVENT_MINION_MAGNETIC_PULL, 20s);
             }
 
             if (Creature* cr = me->GetInstanceScript()->GetCreature(DATA_THADDIUS_BOSS))
@@ -511,31 +510,6 @@ public:
                     me->CastSpell(me, SPELL_STATIC_FIELD, false);
                     events.Repeat(3s);
                     break;
-                case EVENT_MINION_MAGNETIC_PULL:
-               {
-                    events.Repeat(20s);
-                    if (Creature* feugen = me->GetInstanceScript()->GetCreature(DATA_FEUGEN_BOSS))
-                    {
-                        if (!feugen->IsAlive() || !feugen->GetVictim() || !me->GetVictim())
-                            return;
-
-                        float threatFeugen = feugen->GetThreatMgr().GetThreat(feugen->GetVictim());
-                        float threatStalagg = me->GetThreatMgr().GetThreat(me->GetVictim());
-                        Unit* tankFeugen = feugen->GetVictim();
-                        Unit* tankStalagg = me->GetVictim();
-
-                        feugen->GetThreatMgr().ModifyThreatByPercent(tankFeugen, -100);
-                        feugen->AddThreat(tankStalagg, threatFeugen);
-                        feugen->CastSpell(tankStalagg, SPELL_MAGNETIC_PULL, true);
-                        feugen->AI()->DoAction(ACTION_MAGNETIC_PULL);
-
-                        me->GetThreatMgr().ModifyThreatByPercent(tankStalagg, -100);
-                        me->AddThreat(tankFeugen, threatStalagg);
-                        me->CastSpell(tankFeugen, SPELL_MAGNETIC_PULL, true);
-                        DoAction(ACTION_MAGNETIC_PULL);
-                    }
-                    break;
-                }
                 case EVENT_MINION_CHECK_DISTANCE:
                     if (Creature* cr = ObjectAccessor::GetCreature(*me, myCoil))
                     {
@@ -650,9 +624,40 @@ class spell_thaddius_polarity_shift : public SpellScript
         Unit* caster = GetCaster();
         if (Unit* target = GetHitUnit())
         {
+            // Clear stacking buffs from previous polarity
             target->RemoveAurasDueToSpell(SPELL_POSITIVE_CHARGE_STACK);
             target->RemoveAurasDueToSpell(SPELL_NEGATIVE_CHARGE_STACK);
-            target->CastSpell(target, roll_chance_i(50) ? SPELL_POSITIVE_POLARITY : SPELL_NEGATIVE_POLARITY, true, nullptr, nullptr, caster->GetGUID());
+
+            bool assignPositive = false;
+            if (Player* player = target->ToPlayer())
+            {
+                switch (player->getClass())
+                {
+                    case CLASS_WARRIOR:
+                    case CLASS_ROGUE:
+                    case CLASS_PALADIN:
+                    case CLASS_DEATH_KNIGHT:
+                        assignPositive = true;
+                        break;
+                    case CLASS_SHAMAN:
+                        // Treat Enhancement as melee: Dual Wield spell (674) is a reliable marker.
+                        assignPositive = player->HasSpell(674);
+                        break;
+                    case CLASS_DRUID:
+                    {
+                        ShapeshiftForm form = player->GetShapeshiftForm();
+                        assignPositive = (form == FORM_CAT || form == FORM_BEAR || form == FORM_DIREBEAR);
+                        break;
+                    }
+                    default:
+                        assignPositive = false;
+                        break;
+                }
+            }
+
+            uint32 polaritySpell = assignPositive ? SPELL_POSITIVE_POLARITY : SPELL_NEGATIVE_POLARITY;
+            target->RemoveAurasDueToSpell(assignPositive ? SPELL_NEGATIVE_POLARITY : SPELL_POSITIVE_POLARITY);
+            target->CastSpell(target, polaritySpell, true, nullptr, nullptr, caster ? caster->GetGUID() : ObjectGuid::Empty);
         }
     }
 
@@ -724,6 +729,6 @@ void AddSC_boss_thaddius_40()
     new boss_thaddius_summon_40();
 //    new npc_tesla();
     RegisterSpellScript(spell_thaddius_pos_neg_charge);
-    // RegisterSpellScript(spell_thaddius_polarity_shift);
+    RegisterSpellScript(spell_thaddius_polarity_shift);
 //    new at_thaddius_entrance();
 }
