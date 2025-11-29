@@ -186,7 +186,6 @@ public:
         _events.Reset();
         _currentWingTaunt = SAY_FIRST_WING_TAUNT;
         _horsemanLoaded = 0;
-        _thaddiusScreams = false;
 
         // Achievements
         _abominationsKilled = 0;

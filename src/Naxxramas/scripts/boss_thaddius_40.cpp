@@ -631,7 +631,8 @@ class spell_thaddius_polarity_shift : public SpellScript
                         assignPositive = true;
                         break;
                     case CLASS_SHAMAN:
-                        assignPositive = player->GetPrimarySpecialization() == TALENT_SPEC_SHAMAN_ENHANCEMENT;
+                        // Treat Enhancement as melee: Dual Wield spell (674) is a reliable marker.
+                        assignPositive = player->HasSpell(674);
                         break;
                     case CLASS_DRUID:
                     {
