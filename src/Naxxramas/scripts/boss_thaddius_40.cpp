@@ -724,6 +724,6 @@ void AddSC_boss_thaddius_40()
     new boss_thaddius_summon_40();
 //    new npc_tesla();
     RegisterSpellScript(spell_thaddius_pos_neg_charge);
-    // RegisterSpellScript(spell_thaddius_polarity_shift);
+    RegisterSpellScript(spell_thaddius_polarity_shift);
 //    new at_thaddius_entrance();
 }
