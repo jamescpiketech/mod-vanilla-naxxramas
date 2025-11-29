@@ -85,23 +85,21 @@ enum Spells
 enum Events
 {
     EVENT_MINION_POWER_SURGE            = 1,
-    EVENT_MINION_MAGNETIC_PULL          = 2,
-    EVENT_MINION_CHECK_DISTANCE         = 3,
-    EVENT_MINION_STATIC_FIELD           = 4,
+    EVENT_MINION_CHECK_DISTANCE         = 2,
+    EVENT_MINION_STATIC_FIELD           = 3,
 
-    EVENT_THADDIUS_INIT                 = 5,
-    EVENT_THADDIUS_ENTER_COMBAT         = 6,
-    EVENT_THADDIUS_CHAIN_LIGHTNING      = 7,
-    EVENT_THADDIUS_BERSERK              = 8,
-    EVENT_THADDIUS_POLARITY_SHIFT       = 9,
-    EVENT_ALLOW_BALL_LIGHTNING          = 10
+    EVENT_THADDIUS_INIT                 = 4,
+    EVENT_THADDIUS_ENTER_COMBAT         = 5,
+    EVENT_THADDIUS_CHAIN_LIGHTNING      = 6,
+    EVENT_THADDIUS_BERSERK              = 7,
+    EVENT_THADDIUS_POLARITY_SHIFT       = 8,
+    EVENT_ALLOW_BALL_LIGHTNING          = 9
 };
 
 enum Misc
 {
-    ACTION_MAGNETIC_PULL                = 1,
-    ACTION_SUMMON_DIED                  = 2,
-    ACTION_RESTORE                      = 3,
+    ACTION_SUMMON_DIED                  = 1,
+    ACTION_RESTORE                      = 2,
     GO_TESLA_COIL_LEFT                  = 181478,
     GO_TESLA_COIL_RIGHT                 = 181477,
     NPC_TESLA_COIL                      = 16218
@@ -268,7 +266,7 @@ public:
             if (summonTimer) // Revive
             {
                 summonTimer += diff;
-                if (summonTimer >= 20000) // allow 20s to finish both before they revive
+                if (summonTimer >= 20000) // increased simultaneous kill window
                 {
                     summons.DoAction(ACTION_RESTORE);
                     summonTimer = 0;
@@ -427,12 +425,7 @@ public:
 
         void DoAction(int32 param) override
         {
-            if (param == ACTION_MAGNETIC_PULL)
-            {
-                pullTimer = 1;
-                me->SetControlled(true, UNIT_STATE_STUNNED);
-            }
-            else if (param == ACTION_RESTORE)
+            if (param == ACTION_RESTORE)
             {
                 if (!me->IsAlive())
                 {
@@ -624,10 +617,8 @@ class spell_thaddius_polarity_shift : public SpellScript
         Unit* caster = GetCaster();
         if (Unit* target = GetHitUnit())
         {
-            // Clear stacking buffs from previous polarity
             target->RemoveAurasDueToSpell(SPELL_POSITIVE_CHARGE_STACK);
             target->RemoveAurasDueToSpell(SPELL_NEGATIVE_CHARGE_STACK);
-
             bool assignPositive = false;
             if (Player* player = target->ToPlayer())
             {
@@ -640,8 +631,7 @@ class spell_thaddius_polarity_shift : public SpellScript
                         assignPositive = true;
                         break;
                     case CLASS_SHAMAN:
-                        // Treat Enhancement as melee: Dual Wield spell (674) is a reliable marker.
-                        assignPositive = player->HasSpell(674);
+                        assignPositive = player->GetPrimarySpecialization() == TALENT_SPEC_SHAMAN_ENHANCEMENT;
                         break;
                     case CLASS_DRUID:
                     {
@@ -709,16 +699,20 @@ class at_thaddius_entrance : public AreaTriggerScript
 public:
     at_thaddius_entrance() : AreaTriggerScript("at_thaddius_entrance") { }
 
+    bool _thaddiusIntro = false;
+
     bool OnTrigger(Player* player, AreaTrigger const* /*areaTrigger*/) override
     {
         InstanceScript* instance = player->GetInstanceScript();
-        if (!instance || instance->GetData(DATA_THADDIUS_INTRO) || instance->GetBossState(BOSS_THADDIUS) == DONE)
+        if (!instance || _thaddiusIntro == true || instance->GetBossState(BOSS_THADDIUS) == DONE)
             return true;
 
         if (Creature* thaddius = instance->GetCreature(DATA_THADDIUS_BOSS))
+        {
             thaddius->AI()->Talk(SAY_GREET);
+            _thaddiusIntro = true;
+        }
 
-        instance->SetData(DATA_THADDIUS_INTRO, 1);
         return true;
     }
 };
@@ -729,6 +723,6 @@ void AddSC_boss_thaddius_40()
     new boss_thaddius_summon_40();
 //    new npc_tesla();
     RegisterSpellScript(spell_thaddius_pos_neg_charge);
-    RegisterSpellScript(spell_thaddius_polarity_shift);
+    // RegisterSpellScript(spell_thaddius_polarity_shift);
 //    new at_thaddius_entrance();
 }

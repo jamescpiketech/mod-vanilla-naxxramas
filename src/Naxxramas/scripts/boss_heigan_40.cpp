@@ -43,6 +43,8 @@ enum Spells
     SPELL_DECREPIT_FEVER_25         = 55011,
     SPELL_PLAGUE_CLOUD              = 29350,
     SPELL_TELEPORT_SELF             = 30211,
+
+    SPELL_TELEPORT_PLAYERS          = 29273, // updated target in db
     SPELL_SUMMON_PLAYER             = 25104,
 };
 
@@ -191,6 +193,10 @@ public:
                     if (player->IsAlive() && !player->IsGameMaster())
                         if (player->GetPositionY() <= -3735.0f)
                             player->KillSelf();
+        }
+
+        void DoEventTeleportPlayer()
+        {
         }
 
         void UpdateAI(uint32 diff) override

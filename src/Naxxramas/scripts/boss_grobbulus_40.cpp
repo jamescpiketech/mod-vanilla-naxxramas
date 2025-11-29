@@ -102,7 +102,7 @@ public:
             events.ScheduleEvent(EVENT_POISON_CLOUD, 20s);
             events.ScheduleEvent(EVENT_MUTATING_INJECTION, 20s);
             events.ScheduleEvent(EVENT_SLIME_SPRAY, 10s);
-            events.ScheduleEvent(EVENT_BERSERK, Milliseconds(RAID_MODE(720000, 540000, 540000, 540000)));
+            events.ScheduleEvent(EVENT_BERSERK, RAID_MODE(720s, 540s, 540s, 540s));
         }
 
         void SpellHitTarget(Unit* target, SpellInfo const* spellInfo) override
@@ -169,7 +169,11 @@ public:
                     break;
                 case EVENT_SLIME_SPRAY:
                     Talk(EMOTE_SLIME);
-                    me->CastSpell(me->GetVictim(), RAID_MODE(SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25, SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25), false);
+                    if (Unit* target = me->GetVictim())
+                    {
+                        int32 bp0 = urand(3200, 4800);
+                        me->CastCustomSpell(target, SPELL_SLIME_SPRAY_10, &bp0, nullptr, nullptr, false);
+                    }
                     events.Repeat(30s);
                     break;
                 case EVENT_MUTATING_INJECTION:
@@ -177,7 +181,8 @@ public:
                     {
                         me->CastSpell(target, SPELL_MUTATING_INJECTION, false);
                     }
-                    events.Repeat(Milliseconds(6000 + uint32(120 * me->GetHealthPct())));
+                    // Slightly slower cadence (~20% longer) to ease pressure at low health
+                    events.Repeat(Milliseconds(7200 + uint32(144 * me->GetHealthPct())));
                     break;
             }
             DoMeleeAttackIfReady();

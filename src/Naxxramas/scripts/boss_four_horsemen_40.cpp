@@ -145,7 +145,7 @@ public:
             me->SetPosition(me->GetHomePosition());
             events.Reset();
             events.RescheduleEvent(EVENT_MARK_CAST, 30s);
-            events.RescheduleEvent(EVENT_BERSERK, 10min);
+            events.RescheduleEvent(EVENT_BERSERK, 600s);
             summons.DespawnAll(); // despawn spirits
             if ((me->GetEntry() != NPC_LADY_BLAUMEUX_40 && me->GetEntry() != NPC_SIR_ZELIEK_40))
             {
@@ -155,7 +155,7 @@ public:
             {
                 events.RescheduleEvent(EVENT_SECONDARY_SPELL, 15s);
             }
-            doneFirstShieldWall = true; // skip 50% Shield Wall, keep 20% check
+            doneFirstShieldWall = true; // skip 50% defensive, keep 20% check
         }
 
         void KilledUnit(Unit* who) override
@@ -279,13 +279,6 @@ public:
                     events.Repeat(25s);
                     return;
                 case EVENT_HEALTH_CHECK:
-                    if (!doneFirstShieldWall && me->GetHealthPct() <= 50.0f)
-                    {
-                        DoCastSelf(SPELL_SHIELDWALL, true);
-                        doneFirstShieldWall = true;
-                        events.Repeat(1s);
-                        break;
-                    }
                     if (doneFirstShieldWall && me->GetHealthPct() <= 20.0f)
                     {
                         if (!me->HasAura(SPELL_SHIELDWALL)) // prevent refresh of first shield wall

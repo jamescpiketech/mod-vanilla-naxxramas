@@ -114,33 +114,22 @@ public:
             {
                 case EVENT_HATEFUL_STRIKE:
                    {
-                        // Cast Hateful Strike on the highest-threat target in melee range that is not the current victim (dedicated off-tank).
-                        // If no such target exists, fall back to the current victim to avoid stalling.
-                        std::list<HostileReference*> threatList = me->GetThreatMgr().GetThreatList();
-                        Unit* hatefulTarget = nullptr;
-                        uint8 counter = 0;
-                        for (auto const& ref : threatList)
+                        // Hit the second highest threat target in melee range (fallback to victim if none)
+                        std::vector<Unit*> meleeThreatOrder;
+                        for (auto const& ref : me->GetThreatMgr().GetThreatList())
                         {
-                            Unit* target = ref->getTarget();
-                            if (counter < 3) // keep top aggro slots sticky
-                                me->AddThreat(target, 500.0f);
-
-                            if (target == me->GetVictim())
-                            {
-                                ++counter;
-                                continue; // never pick main tank
-                            }
-
-                            if (me->IsWithinMeleeRange(target))
-                            {
-                                hatefulTarget = target;
-                                break; // first eligible non-victim in threat order
-                            }
-                            ++counter;
+                            if (Unit* t = ref->getTarget())
+                                if (me->IsWithinMeleeRange(t))
+                                    meleeThreatOrder.push_back(t);
                         }
 
-                        if (!hatefulTarget && me->GetVictim() && me->IsWithinMeleeRange(me->GetVictim()))
-                            hatefulTarget = me->GetVictim(); // safety fallback
+                        Unit* hatefulTarget = nullptr;
+                        if (meleeThreatOrder.size() >= 2)
+                            hatefulTarget = meleeThreatOrder[1];
+                        else if (!meleeThreatOrder.empty())
+                            hatefulTarget = meleeThreatOrder[0];
+                        else if (me->GetVictim() && me->IsWithinMeleeRange(me->GetVictim()))
+                            hatefulTarget = me->GetVictim();
 
                         if (hatefulTarget)
                         {

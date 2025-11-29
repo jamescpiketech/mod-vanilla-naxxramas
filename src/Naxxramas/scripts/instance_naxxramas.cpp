@@ -261,12 +261,7 @@ public:
     void OnPlayerEnter(Player* player) override
     {
         InstanceScript::OnPlayerEnter(player);
-        if (_thaddiusScreams == false)
-        {
-            _events.ScheduleEvent(EVENT_THADDIUS_SCREAMS, 2min, 2min + 30s);
-        }
-
-        SetData(DATA_THADDIUS_SCREAMS, 0);
+        // Thaddius background screams disabled
     }
 
     void OnCreatureCreate(Creature* creature) override
@@ -461,9 +456,6 @@ public:
         {
             case DATA_ABOMINATION_KILLED:
                 ++_abominationsKilled;
-                return;
-            case DATA_THADDIUS_SCREAMS:
-                _thaddiusScreams = true;
                 return;
             case DATA_FRENZY_REMOVED:
                 _faerlinaAchievement = false;
@@ -671,14 +663,6 @@ public:
 
         switch (_events.ExecuteEvent())
         {
-            case EVENT_THADDIUS_SCREAMS:
-            {
-                if (GetBossState(BOSS_THADDIUS) == DONE)
-                    break;
-
-                instance->PlayDirectSoundToMap(SOUND_SCREAM + urand(0, 3));
-                return _events.ScheduleEvent(EVENT_THADDIUS_SCREAMS, 2min, 2min + 30s);
-            }
             case EVENT_AND_THEY_WOULD_ALL_GO_DOWN_TOGETHER:
                 _horsemanAchievement = false;
                 break;
@@ -743,7 +727,6 @@ private:
     EventMap _events;
     uint8 _currentWingTaunt;
     uint8 _horsemanLoaded;
-    bool _thaddiusScreams;
 
     // GameObjects
     std::set<GameObject*> _heiganEruption[HeiganEruptSectionCount];
