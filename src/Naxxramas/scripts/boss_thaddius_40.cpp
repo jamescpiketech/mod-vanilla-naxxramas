@@ -579,16 +579,17 @@ class spell_thaddius_pos_neg_charge : public SpellScript
             return;
 
         // Determine charge on target
-        // Treat any of the positive/negative auras (base + stack) as the same polarity
-        bool targetPositive = target->HasAura(SPELL_POSITIVE_POLARITY) || target->HasAura(SPELL_POSITIVE_CHARGE) || target->HasAura(SPELL_POSITIVE_CHARGE_STACK);
-        bool targetNegative = target->HasAura(SPELL_NEGATIVE_POLARITY) || target->HasAura(SPELL_NEGATIVE_CHARGE) || target->HasAura(SPELL_NEGATIVE_CHARGE_STACK);
+        if (!GetTriggeringSpell())
+            return;
 
-        // Determine which charge this damage aura represents
+        // Minimal same-polarity check: use the polarity buff auras
         uint32 spellId = GetSpellInfo()->Id;
         bool dmgIsPositive = (spellId == SPELL_POSITIVE_CHARGE || spellId == SPELL_POSITIVE_POLARITY);
 
-        // Same polarity or non-player: no damage
-        if (!target->IsPlayer() || (dmgIsPositive && targetPositive) || (!dmgIsPositive && targetNegative))
+        bool targetHasPositive = target->HasAura(SPELL_POSITIVE_POLARITY);
+        bool targetHasNegative = target->HasAura(SPELL_NEGATIVE_POLARITY);
+
+        if (!target->IsPlayer() || (dmgIsPositive && targetHasPositive) || (!dmgIsPositive && targetHasNegative))
         {
             SetHitDamage(0);
         }
