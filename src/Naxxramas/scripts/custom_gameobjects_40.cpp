@@ -26,6 +26,15 @@ public:
         {
             if (IsAttuned(player) || !sVanillaNaxxramas->requireAttunement)
             {
+                // If the player is a ghost, resurrect before sending them in
+                if (!player->IsAlive())
+                {
+                    player->ResurrectPlayer(1.0f);
+                    player->SpawnCorpseBones();
+                    player->SetHealth(player->GetMaxHealth());
+                    player->SetPower(player->GetPowerType(), player->GetMaxPower(player->GetPowerType()));
+                }
+
                 player->SetRaidDifficulty(RAID_DIFFICULTY_10MAN_HEROIC);
                 player->TeleportTo(533, 3005.51f, -3434.64f, 304.195f, 6.2831f);
             }

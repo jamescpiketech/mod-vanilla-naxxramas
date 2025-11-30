@@ -5,6 +5,16 @@
 #include "SpellScript.h"
 #include "naxxramas.h"
 
+namespace
+{
+    // Eastern Plaguelands return location
+    constexpr uint32 EPL_MAP_ID = 0;
+    constexpr float EPL_X = 3119.318f;
+    constexpr float EPL_Y = -3755.455f;
+    constexpr float EPL_Z = 133.56865f;
+    constexpr float EPL_O = 1.0722394f;
+}
+
 class NaxxPlayerScript : public PlayerScript
 {
 public:
@@ -62,8 +72,9 @@ public:
     {
         if (player->GetMap()->GetSpawnMode() == RAID_DIFFICULTY_10MAN_HEROIC)
         {
-            // Naxx 40 cannot be exited via portals, as in Classic
-            return false;
+            // In the vanilla Naxx version (10H slot), always return to Plaguewood outside location
+            player->TeleportTo(EPL_MAP_ID, EPL_X, EPL_Y, EPL_Z, EPL_O);
+            return true;
         }
         switch (areaTrigger->entry)
         {
