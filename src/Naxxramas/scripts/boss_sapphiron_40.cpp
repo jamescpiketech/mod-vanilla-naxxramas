@@ -224,7 +224,7 @@ public:
 
                 if (Unit* block = ObjectAccessor::GetUnit(*me, guid))
                 {
-                    if (block->IsInBetween(me, target, 2.0f) && block->IsWithinDist(target, 10.0f))
+                    if (block->IsInBetween(me, target, 3.0f) && block->IsWithinDist(target, 10.0f))
                         return false;
                 }
             }
@@ -446,13 +446,23 @@ class spell_sapphiron_frost_explosion : public SpellScript
     void FilterTargets(std::list<WorldObject*>& targets)
     {
         Unit* caster = GetCaster();
-        if (!caster || !caster->ToCreature())
+        Creature* creature = caster ? caster->ToCreature() : nullptr;
+        if (!creature)
+            return;
+
+        // Only run this filter for the 40-man AI; avoid touching 10/25 versions that share the spell id.
+        auto* ai = CAST_AI(boss_sapphiron_40::boss_sapphiron_40AI, creature->AI());
+        if (!ai)
+            return;
+
+        // Extra guard: ensure we're on the 40-man entry or heroic map difficulty used by the level 60 version.
+        if (creature->GetEntry() != NPC_SAPPHIRON_40 && !creature->GetMap()->IsHeroic())
             return;
 
         std::list<WorldObject*> tmplist;
         for (auto& target : targets)
         {
-            if (CAST_AI(boss_sapphiron_40::boss_sapphiron_40AI, caster->ToCreature()->AI())->IsValidExplosionTarget(target))
+            if (ai->IsValidExplosionTarget(target))
             {
                 tmplist.push_back(target);
             }
