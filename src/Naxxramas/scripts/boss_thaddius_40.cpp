@@ -578,30 +578,28 @@ class spell_thaddius_pos_neg_charge : public SpellScript
         if (!target)
             return;
 
-        // Determine charge on target
-        if (!GetTriggeringSpell())
+        if (!target->IsPlayer())
             return;
 
-        // Minimal same-polarity check: use the polarity buff auras
         uint32 spellId = GetSpellInfo()->Id;
         bool dmgIsPositive = (spellId == SPELL_POSITIVE_CHARGE || spellId == SPELL_POSITIVE_POLARITY);
 
-        bool targetHasPositive = target->HasAura(SPELL_POSITIVE_POLARITY);
-        bool targetHasNegative = target->HasAura(SPELL_NEGATIVE_POLARITY);
+        bool targetPositive = target->HasAura(SPELL_POSITIVE_POLARITY) || target->HasAura(SPELL_POSITIVE_CHARGE) || target->HasAura(SPELL_POSITIVE_CHARGE_STACK);
+        bool targetNegative = target->HasAura(SPELL_NEGATIVE_POLARITY) || target->HasAura(SPELL_NEGATIVE_CHARGE) || target->HasAura(SPELL_NEGATIVE_CHARGE_STACK);
 
-        if (!target->IsPlayer() || (dmgIsPositive && targetHasPositive) || (!dmgIsPositive && targetHasNegative))
+        // Same polarity: no damage
+        if ((dmgIsPositive && targetPositive) || (!dmgIsPositive && targetNegative))
         {
             SetHitDamage(0);
+            return;
         }
-        else if (target->GetInstanceScript())
-        {
+
+        if (target->GetInstanceScript())
             target->GetInstanceScript()->SetData(DATA_CHARGES_CROSSED, 0);
-        }
+
         // Adjust damage to 2000 from 4500 for naxx40
         if (target->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC)
-        {
             SetHitDamage(2000);
-        }
     }
 
     void Register() override
