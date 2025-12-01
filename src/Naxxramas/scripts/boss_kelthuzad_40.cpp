@@ -155,7 +155,7 @@ public:
             return std::fmod(o, 2.0f * static_cast<float>(M_PI)); // Only positive values will be passed
         }
 
-        Unit* SelectRealPlayerTarget(float dist) const
+        Unit* SelectRealPlayerTarget(float dist)
         {
             for (uint8 i = 0; i < 10; ++i)
             {
