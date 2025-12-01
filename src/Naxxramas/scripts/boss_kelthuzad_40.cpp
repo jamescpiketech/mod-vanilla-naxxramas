@@ -155,6 +155,27 @@ public:
             return std::fmod(o, 2.0f * static_cast<float>(M_PI)); // Only positive values will be passed
         }
 
+        Unit* SelectRealPlayerTarget(float dist) const
+        {
+            for (uint8 i = 0; i < 10; ++i)
+            {
+                if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, dist, true))
+                {
+                    if (target->GetTypeId() != TYPEID_PLAYER)
+                        continue;
+
+                    if (Player* player = target->ToPlayer())
+                    {
+                        if (!player->GetSession() || player->GetSession()->IsBot())
+                            continue;
+                    }
+
+                    return target;
+                }
+            }
+            return nullptr;
+        }
+
         void SpawnHelpers()
         {
             // spawn at gate
@@ -280,7 +301,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
             me->CastSpell(me, SPELL_KELTHUZAD_CHANNEL, false);
             events.ScheduleEvent(EVENT_SPAWN_POOL, 5s);
-            events.ScheduleEvent(EVENT_SUMMON_SOLDIER, 6400ms);
+            events.ScheduleEvent(EVENT_SUMMON_SOLDIER, 8s);
             events.ScheduleEvent(EVENT_SUMMON_UNSTOPPABLE_ABOMINATION, 10s);
             events.ScheduleEvent(EVENT_SUMMON_SOUL_WEAVER, 12s);
             events.ScheduleEvent(EVENT_PHASE_2, 228s);
@@ -333,11 +354,11 @@ public:
                     break;
                 case EVENT_SUMMON_SOLDIER:
                     SummonHelper(NPC_SOLDIER_OF_THE_FROZEN_WASTES, 1);
-                    events.Repeat(3100ms);
+                    events.Repeat(6s);
                     break;
                 case EVENT_SUMMON_UNSTOPPABLE_ABOMINATION:
                     SummonHelper(NPC_UNSTOPPABLE_ABOMINATION, 1);
-                    events.Repeat(18s + 500ms);
+                    events.Repeat(20s);
                     break;
                 case EVENT_SUMMON_SOUL_WEAVER:
                     SummonHelper(NPC_SOUL_WEAVER, 1);
@@ -356,12 +377,8 @@ public:
                     events.ScheduleEvent(EVENT_FROST_BOLT_MULTI, 15s, 30s);
                     events.ScheduleEvent(EVENT_DETONATE_MANA, 30s);
                     events.ScheduleEvent(EVENT_PHASE_3, 1s);
-                    events.ScheduleEvent(EVENT_SHADOW_FISSURE, 25s);
+                    events.ScheduleEvent(EVENT_SHADOW_FISSURE, 30s);
                     events.ScheduleEvent(EVENT_FROST_BLAST, 45s);
-                    if (Is25ManRaid())
-                    {
-                        events.ScheduleEvent(EVENT_CHAINS, 90s);
-                    }
                     break;
                 case EVENT_ENRAGE:
                     me->CastSpell(me, SPELL_BERSERK, true);
@@ -375,11 +392,11 @@ public:
                     events.Repeat(15s, 30s);
                     break;
                 case EVENT_SHADOW_FISSURE:
-                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 100.0f, true))
+                    if (Unit* target = SelectRealPlayerTarget(100.0f))
                     {
                         me->CastSpell(target, SPELL_SHADOW_FISURE, false);
                     }
-                    events.Repeat(25s);
+                    events.Repeat(30s);
                     break;
                 case EVENT_FROST_BLAST:
                     if (Unit* target = SelectTarget(SelectTargetMethod::Random, RAID_MODE(1, 0, 0, 0), 0, true))
@@ -388,17 +405,6 @@ public:
                     }
                     Talk(SAY_FROST_BLAST);
                     events.Repeat(45s);
-                    break;
-                case EVENT_CHAINS:
-                    for (uint8 i = 0; i < 3; ++i)
-                    {
-                        if (Unit* target = SelectTarget(SelectTargetMethod::Random, 1, 200, true, true, -SPELL_CHAINS_OF_KELTHUZAD))
-                        {
-                            me->CastSpell(target, SPELL_CHAINS_OF_KELTHUZAD, true);
-                        }
-                    }
-                    Talk(SAY_CHAIN);
-                    events.Repeat(90s);
                     break;
                 case EVENT_DETONATE_MANA:
                     {
@@ -450,7 +456,7 @@ public:
                     if (Creature* cr = instance->GetCreature(DATA_LICH_KING_BOSS))
                         cr->AI()->Talk(SAY_ANSWER_REQUEST);
 
-                    for (uint8 i = 0 ; i < RAID_MODE(2, 4, 4, 4); ++i)
+                    for (uint8 i = 0 ; i < 2; ++i)
                         events.ScheduleEvent(EVENT_SUMMON_GUARDIAN_OF_ICECROWN, Milliseconds(10000 + (i * 5000)));
 
                     break;
@@ -667,7 +673,7 @@ class spell_kelthuzad_detonate_mana_aura : public AuraScript
     {
         PreventDefaultAction();
         Unit* target = GetTarget();
-        if (auto mana = int32(target->GetMaxPower(POWER_MANA) / 10))
+        if (auto mana = int32(target->GetMaxPower(POWER_MANA) / 20))
         {
             mana = target->ModifyPower(POWER_MANA, -mana);
             target->CastCustomSpell(SPELL_MANA_DETONATION_DAMAGE, SPELLVALUE_BASE_POINT0, -mana * 10, target, true, nullptr, aurEff);
