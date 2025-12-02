@@ -379,6 +379,10 @@ public:
                     events.ScheduleEvent(EVENT_PHASE_3, 1s);
                     events.ScheduleEvent(EVENT_SHADOW_FISSURE, 30s);
                     events.ScheduleEvent(EVENT_FROST_BLAST, 45s);
+                    if (Is25ManRaid())
+                    {
+                        events.ScheduleEvent(EVENT_CHAINS, 90s);
+                    }
                     break;
                 case EVENT_ENRAGE:
                     me->CastSpell(me, SPELL_BERSERK, true);
@@ -429,6 +433,14 @@ public:
                         events.Repeat(30s);
                         break;
                     }
+                case EVENT_CHAINS:
+                    if (Unit* target = SelectTarget(SelectTargetMethod::Random, 1, 200, true, true, -SPELL_CHAINS_OF_KELTHUZAD))
+                    {
+                        me->CastSpell(target, SPELL_CHAINS_OF_KELTHUZAD, true);
+                    }
+                    Talk(SAY_CHAIN);
+                    events.Repeat(90s);
+                    break;
                 case EVENT_PHASE_3:
                     if (me->HealthBelowPct(45))
                     {
@@ -456,7 +468,7 @@ public:
                     if (Creature* cr = instance->GetCreature(DATA_LICH_KING_BOSS))
                         cr->AI()->Talk(SAY_ANSWER_REQUEST);
 
-                    for (uint8 i = 0 ; i < 2; ++i)
+                    for (uint8 i = 0 ; i < 4; ++i)
                         events.ScheduleEvent(EVENT_SUMMON_GUARDIAN_OF_ICECROWN, Milliseconds(10000 + (i * 5000)));
 
                     break;
