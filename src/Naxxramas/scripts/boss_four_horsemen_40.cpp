@@ -191,7 +191,7 @@ public:
                     if (Creature* spirit = GetClosestCreatureWithEntry(me, NPC_SPIRIT_KORTHAZZ, 200.0f))
                         spirit->DespawnOrUnsummon();
                     if (Player* player = me->GetMap()->GetPlayers().getFirst()->GetSource())
-                        if (GameObject* chest = player->SummonGameObject(GO_HORSEMEN_CHEST_40, 2514.8f, -2944.9f, 245.55f, 5.51f, 0, 0, 0, 0, 0))
+                        if (GameObject* chest = player->SummonGameObject(GO_HORSEMEN_CHEST_40, 2514.8f, -2944.9f, 245.55f, 5.51f, HOUR, 0, 0, 0, 0))
                             chest->SetLootRecipient(me);
                 }
             }
