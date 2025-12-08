@@ -75,6 +75,7 @@ public:
         EventMap events;
         SummonList summons;
         uint32 dropSludgeTimer{};
+        GuidSet sprayHitPlayers;
 
         void Reset() override
         {
@@ -82,6 +83,7 @@ public:
             events.Reset();
             summons.DespawnAll();
             dropSludgeTimer = 0;
+            sprayHitPlayers.clear();
         }
 
         void PullChamberAdds()
@@ -100,7 +102,7 @@ public:
             PullChamberAdds();
             me->SetInCombatWithZone();
             events.ScheduleEvent(EVENT_POISON_CLOUD, 20s);
-            events.ScheduleEvent(EVENT_MUTATING_INJECTION, 20s);
+            events.ScheduleEvent(EVENT_MUTATING_INJECTION, 30s);
             events.ScheduleEvent(EVENT_SLIME_SPRAY, 10s);
             events.ScheduleEvent(EVENT_BERSERK, RAID_MODE(720s, 540s, 540s, 540s));
         }
@@ -109,6 +111,10 @@ public:
         {
             if (spellInfo->Id == RAID_MODE(SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25, SPELL_SLIME_SPRAY_10, SPELL_SLIME_SPRAY_25) && target->IsPlayer())
             {
+                // Only spawn one slime per player per spray cast, even if multiple ticks hit
+                if (!sprayHitPlayers.insert(target->GetGUID()).second)
+                    return;
+
                 me->SummonCreature(NPC_FALLOUT_SLIME, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
             }
         }
@@ -168,6 +174,7 @@ public:
                     me->CastSpell(me, SPELL_BERSERK, true);
                     break;
                 case EVENT_SLIME_SPRAY:
+                    sprayHitPlayers.clear();
                     Talk(EMOTE_SLIME);
                     if (Unit* target = me->GetVictim())
                     {
@@ -181,8 +188,8 @@ public:
                     {
                         me->CastSpell(target, SPELL_MUTATING_INJECTION, false);
                     }
-                    // Slightly slower cadence (~20% longer) to ease pressure at low health
-                    events.Repeat(Milliseconds(7200 + uint32(144 * me->GetHealthPct())));
+                    // Cadence scales linearly: ~30s early to ~10s late
+                    events.Repeat(Milliseconds(10000 + uint32(200 * me->GetHealthPct())));
                     break;
             }
             DoMeleeAttackIfReady();
