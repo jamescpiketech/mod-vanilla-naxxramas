@@ -660,6 +660,16 @@ public:
     {
         _events.Update(diff);
 
+        // Failsafe: if Sapphiron is dead, ensure the waterfall gate is open
+        if (GetBossState(BOSS_SAPPHIRON) == DONE)
+        {
+            if (GameObject* go = GetGameObject(DATA_SAPPHIRON_GATE))
+            {
+                if (go->GetGoState() != GO_STATE_ACTIVE)
+                    SetGoState(DATA_SAPPHIRON_GATE, GO_STATE_ACTIVE);
+            }
+        }
+
         switch (_events.ExecuteEvent())
         {
             case EVENT_AND_THEY_WOULD_ALL_GO_DOWN_TOGETHER:
